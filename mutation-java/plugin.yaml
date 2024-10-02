@@ -1,0 +1,94 @@
+schema-version: v2
+kind: plugin
+metadata:
+  name: mutation-java
+  display-name: mutation-java
+  description: Plugin para configuracao de testes de mutacao em projetos java
+  version: 0.1.1
+  picture: pitest.png
+spec:
+  type: app
+  compatibility:
+    - java
+  docs: 
+    pt-br: docs/about.md
+  single-use: False
+  technologies: # Ref: https://docs.stackspot.com/create-use/create-content/yaml-files/plugin-yaml/#technologies-1
+    - Java
+  stk-projects-only: false
+  inputs:
+  - label: Qual gerenciador de dependenciais do projeto?
+    type: text
+    name: gerenciador
+    required: true
+    items:
+      - Maven
+      - Gradle
+
+  - label: Qual lib de logs utilizada no projeto?
+    type: text
+    name: lib_log
+    required: true
+    items:
+      - java.util.logging
+      - org.apache.log4j
+      - org.slf4j
+      - org.apache.commons.logging
+
+  - label: Qual cobertura de mutantes esperada?(1% a 99%)
+    type: int
+    name: mutation_coverage
+    required: true
+
+  - label: Grupo de mutantes a ser utilizado?
+    type: text
+    name: mutantes_group
+    required: true
+    items:
+      - OLD_DEFAULTS
+      - DEFAULTS
+      - STRONGER
+      - ALL
+
+  - label: Qual o pacote das classes a serem gerados mutantes?
+    type: text
+    name: targetClass
+    required: true
+
+  - label: Qual o pacote dos testes unitarios?
+    type: text
+    name: targetTests
+    required: true
+    
+  hooks:
+    - type: edit
+      trigger: after-render
+      path: pom.xml
+      changes:
+        - search:
+            string: "/plugins"
+            insert-before:
+              snippet: snippets/plugin-maven.txt
+            when:
+              not-exists-snippet: snippets/plugin-maven.txt
+      condition:
+        variable: gerenciador
+        operator: "=="
+        value: Maven
+
+    - type: edit
+      trigger: after-render
+      path: build.gradle
+      changes:
+        - insert:
+            line: -1
+            snippet: snippets/task-gradle.txt
+
+        - search:
+            string: "plugins"
+            insert-after:
+              snippet: snippets/plugin-gradle.txt
+      condition:
+        variable: gerenciador
+        operator: "=="
+        value: Gradle
